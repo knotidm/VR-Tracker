@@ -73,33 +73,29 @@ public class VRTracker : MonoBehaviour
             foreach (string data in datas)
             {
                 string[] datasplit = data.Split('=');
-                if (datasplit[0] == "x")
-                {
-                    position.x = float.Parse(datasplit[1]) + positionOffset.x;
-                }
-                else if (datasplit[0] == "z")
-                {
-                    position.y = float.Parse(datasplit[1]) + positionOffset.y;
-                }
-                else if (datasplit[0] == "y")
-                {
-                    position.z = float.Parse(datasplit[1]) + positionOffset.z;
-                }
 
-                else if (datasplit[0] == "ox")
+                switch (datasplit[0])
                 {
-                    orientation.y = -float.Parse(datasplit[1]) + orientationOffset.y;
-                }
-                else if (datasplit[0] == "oy")
-                {
-                    orientation.z = -float.Parse(datasplit[1]) + orientationOffset.z;
-                }
-                else if (datasplit[0] == "oz")
-                {
-                    orientation.x = -float.Parse(datasplit[1]) + orientationOffset.x;
+                    case "x":
+                        position.x = float.Parse(datasplit[1]) + positionOffset.x;
+                        break;
+                    case "z":
+                        position.y = float.Parse(datasplit[1]) + positionOffset.y;
+                        break;
+                    case "y":
+                        position.z = float.Parse(datasplit[1]) + positionOffset.z;
+                        break;
+                    case "ox":
+                        orientation.y = -float.Parse(datasplit[1]) + orientationOffset.y;
+                        break;
+                    case "oy":
+                        orientation.z = -float.Parse(datasplit[1]) + orientationOffset.z;
+                        break;
+                    case "oz":
+                        orientation.x = -float.Parse(datasplit[1]) + orientationOffset.x;
+                        break;
                 }
             }
-
         }
         else if (e.Data.Contains("cmd=specialcmd"))
         {
