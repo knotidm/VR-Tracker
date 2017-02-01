@@ -12,8 +12,8 @@ public class VRTracker : MonoBehaviour
     public Vector3 orientationOffset;
     private int counter = 0;
 
-    public string TagUID = "5c:cf:7f:c4:4b:7e";
-    public string UserUID = "ABC123";
+    public string TagUID;
+    public string UserUID;
 
     private bool orientationEnablingSent = false;
     void Start()
