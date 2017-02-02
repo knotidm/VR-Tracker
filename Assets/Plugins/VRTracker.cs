@@ -6,13 +6,18 @@ public class VRTracker : MonoBehaviour
     private WebSocket webSocket;
     private Vector3 cameraPosition;
     private Vector3 cameraOrientation;
+    private Vector3 cubePosition;
+    private Vector3 cubeOrientation;
     public int cameraOrientationEnabled = 0;
     public Transform CameraTransform;
     public Vector3 cameraPositionOffset;
     public Vector3 cameraOrientationOffset;
     private int counter = 0;
 
-    public string tagID;
+    public GameObject cube;
+
+    public string cameraTagID;
+    public string cubeTagID;
     public string userID;
 
     private bool orientationEnablingSent = false;
@@ -24,7 +29,7 @@ public class VRTracker : MonoBehaviour
     void Update()
     {
         CameraTransform.transform.position = cameraPosition;
-
+        cube.transform.position = cubePosition;
         if (cameraOrientationEnabled == 1)
         {
             if (!orientationEnablingSent)
@@ -33,10 +38,13 @@ public class VRTracker : MonoBehaviour
                 orientationEnablingSent = true;
 
                 webSocket.SendAsync("cmd=mac&uid=" + userID, OnSendComplete);
-                assignTag(tagID);
-                TagOrientation(tagID, true);
+                assignTag(cameraTagID);
+                assignTag(cubeTagID);
+                TagOrientation(cameraTagID, true);
+                TagOrientation(cubeTagID, true);
             }
             CameraTransform.transform.rotation = Quaternion.Euler(cameraOrientation);
+            cube.transform.rotation = Quaternion.Euler(cubeOrientation);
         }
         else if (counter < 100)
         {
@@ -62,7 +70,9 @@ public class VRTracker : MonoBehaviour
     {
         Debug.Log("VR Tracker : connection established");
         webSocket.SendAsync("cmd=mac&uid=" + userID, OnSendComplete);
-        assignTag(tagID);
+        assignTag(cameraTagID);
+        assignTag(cubeTagID);
+
     }
 
     private void OnMessageHandler(object sender, MessageEventArgs e)
@@ -70,9 +80,10 @@ public class VRTracker : MonoBehaviour
         if (e.Data.Contains("cmd=position"))
         {
             string[] datas = e.Data.Split('&');
-            foreach (string data in datas)
+
+            for (int i = 2; i < 8; i++)
             {
-                string[] datasplit = data.Split('=');
+                string[] datasplit = datas[i].Split('=');
 
                 switch (datasplit[0])
                 {
@@ -96,6 +107,93 @@ public class VRTracker : MonoBehaviour
                         break;
                 }
             }
+
+            for (int i = 9; i < 15; i++)
+            {
+                string[] datasplit = datas[i].Split('=');
+
+                switch (datasplit[0])
+                {
+                    case "x":
+                        cubePosition.x = float.Parse(datasplit[1]) + cameraPositionOffset.x;
+                        break;
+                    case "z":
+                        cubePosition.y = float.Parse(datasplit[1]) + cameraPositionOffset.y;
+                        break;
+                    case "y":
+                        cubePosition.z = float.Parse(datasplit[1]) + cameraPositionOffset.z;
+                        break;
+                    case "ox":
+                        cubeOrientation.y = -float.Parse(datasplit[1]) + cameraOrientationOffset.y;
+                        break;
+                    case "oy":
+                        cubeOrientation.z = -float.Parse(datasplit[1]) + cameraOrientationOffset.z;
+                        break;
+                    case "oz":
+                        cubeOrientation.x = -float.Parse(datasplit[1]) + cameraOrientationOffset.x;
+                        break;
+                }
+            }
+            //if (datas[1] == "uid=5c:cf:7f:d9:98:a9")
+            //{
+
+            //    foreach (string data in datas)
+            //    {
+            //        string[] datasplit = data.Split('=');
+
+            //        switch (datasplit[0])
+            //        {
+            //            case "x":
+            //                cameraPosition.x = float.Parse(datasplit[1]) + cameraPositionOffset.x;
+            //                break;
+            //            case "z":
+            //                cameraPosition.y = float.Parse(datasplit[1]) + cameraPositionOffset.y;
+            //                break;
+            //            case "y":
+            //                cameraPosition.z = float.Parse(datasplit[1]) + cameraPositionOffset.z;
+            //                break;
+            //            case "ox":
+            //                cameraOrientation.y = -float.Parse(datasplit[1]) + cameraOrientationOffset.y;
+            //                break;
+            //            case "oy":
+            //                cameraOrientation.z = -float.Parse(datasplit[1]) + cameraOrientationOffset.z;
+            //                break;
+            //            case "oz":
+            //                cameraOrientation.x = -float.Parse(datasplit[1]) + cameraOrientationOffset.x;
+            //                break;
+            //        }
+            //    }
+            //}
+
+            //if (datas[8] == "uid=a0:20:a6:08:c6:57")
+            //{
+            //    foreach (string data in datas)
+            //    {
+            //        string[] datasplit = data.Split('=');
+
+            //        switch (datasplit[0])
+            //        {
+            //            case "x":
+            //                cubePosition.x = float.Parse(datasplit[1]) + cameraPositionOffset.x;
+            //                break;
+            //            case "z":
+            //                cubePosition.y = float.Parse(datasplit[1]) + cameraPositionOffset.y;
+            //                break;
+            //            case "y":
+            //                cubePosition.z = float.Parse(datasplit[1]) + cameraPositionOffset.z;
+            //                break;
+            //            case "ox":
+            //                cubeOrientation.y = -float.Parse(datasplit[1]) + cameraOrientationOffset.y;
+            //                break;
+            //            case "oy":
+            //                cubeOrientation.z = -float.Parse(datasplit[1]) + cameraOrientationOffset.z;
+            //                break;
+            //            case "oz":
+            //                cubeOrientation.x = -float.Parse(datasplit[1]) + cameraOrientationOffset.x;
+            //                break;
+            //        }
+            //    }
+            //}
         }
         else if (e.Data.Contains("cmd=specialcmd"))
         {
@@ -153,7 +251,8 @@ public class VRTracker : MonoBehaviour
         else if (e.Data.Contains("cmd=error"))
         {
             webSocket.SendAsync("cmd=mac&uid=" + userID, OnSendComplete);
-            assignTag(tagID);
+            assignTag(cameraTagID);
+            assignTag(cubeTagID);
         }
         else
         {
@@ -250,7 +349,8 @@ public class VRTracker : MonoBehaviour
 
     void OnApplicationQuit()
     {
-        TagOrientation(tagID, false);
+        TagOrientation(cameraTagID, false);
+        TagOrientation(cubeTagID, false);
         closeWebsocket();
     }
 }
