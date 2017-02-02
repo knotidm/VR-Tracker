@@ -4,16 +4,16 @@ using WebSocketSharp;
 public class VRTracker : MonoBehaviour
 {
     private WebSocket webSocket;
-    private Vector3 position;
-    private Vector3 orientation;
-    public int orientationEnabled = 0;
+    private Vector3 cameraPosition;
+    private Vector3 cameraOrientation;
+    public int cameraOrientationEnabled = 0;
     public Transform CameraTransform;
-    public Vector3 positionOffset;
-    public Vector3 orientationOffset;
+    public Vector3 cameraPositionOffset;
+    public Vector3 cameraOrientationOffset;
     private int counter = 0;
 
-    public string TagUID;
-    public string UserUID;
+    public string tagID;
+    public string userID;
 
     private bool orientationEnablingSent = false;
     void Start()
@@ -23,20 +23,20 @@ public class VRTracker : MonoBehaviour
 
     void Update()
     {
-        CameraTransform.transform.position = position;
+        CameraTransform.transform.position = cameraPosition;
 
-        if (orientationEnabled == 1)
+        if (cameraOrientationEnabled == 1)
         {
             if (!orientationEnablingSent)
             {
                 Debug.Log("VR Tracker : asking for orientation");
                 orientationEnablingSent = true;
 
-                webSocket.SendAsync("cmd=mac&uid=" + UserUID, OnSendComplete);
-                assignTag(TagUID);
-                TagOrientation(TagUID, true);
+                webSocket.SendAsync("cmd=mac&uid=" + userID, OnSendComplete);
+                assignTag(tagID);
+                TagOrientation(tagID, true);
             }
-            CameraTransform.transform.rotation = Quaternion.Euler(orientation);
+            CameraTransform.transform.rotation = Quaternion.Euler(cameraOrientation);
         }
         else if (counter < 100)
         {
@@ -44,7 +44,7 @@ public class VRTracker : MonoBehaviour
         }
         else if (counter == 100)
         {
-            orientationEnabled = 1;
+            cameraOrientationEnabled = 1;
             counter++;
         }
     }
@@ -61,8 +61,8 @@ public class VRTracker : MonoBehaviour
     private void OnOpenHandler(object sender, System.EventArgs e)
     {
         Debug.Log("VR Tracker : connection established");
-        webSocket.SendAsync("cmd=mac&uid=" + UserUID, OnSendComplete);
-        assignTag(TagUID);
+        webSocket.SendAsync("cmd=mac&uid=" + userID, OnSendComplete);
+        assignTag(tagID);
     }
 
     private void OnMessageHandler(object sender, MessageEventArgs e)
@@ -77,22 +77,22 @@ public class VRTracker : MonoBehaviour
                 switch (datasplit[0])
                 {
                     case "x":
-                        position.x = float.Parse(datasplit[1]) + positionOffset.x;
+                        cameraPosition.x = float.Parse(datasplit[1]) + cameraPositionOffset.x;
                         break;
                     case "z":
-                        position.y = float.Parse(datasplit[1]) + positionOffset.y;
+                        cameraPosition.y = float.Parse(datasplit[1]) + cameraPositionOffset.y;
                         break;
                     case "y":
-                        position.z = float.Parse(datasplit[1]) + positionOffset.z;
+                        cameraPosition.z = float.Parse(datasplit[1]) + cameraPositionOffset.z;
                         break;
                     case "ox":
-                        orientation.y = -float.Parse(datasplit[1]) + orientationOffset.y;
+                        cameraOrientation.y = -float.Parse(datasplit[1]) + cameraOrientationOffset.y;
                         break;
                     case "oy":
-                        orientation.z = -float.Parse(datasplit[1]) + orientationOffset.z;
+                        cameraOrientation.z = -float.Parse(datasplit[1]) + cameraOrientationOffset.z;
                         break;
                     case "oz":
-                        orientation.x = -float.Parse(datasplit[1]) + orientationOffset.x;
+                        cameraOrientation.x = -float.Parse(datasplit[1]) + cameraOrientationOffset.x;
                         break;
                 }
             }
@@ -152,8 +152,8 @@ public class VRTracker : MonoBehaviour
         }
         else if (e.Data.Contains("cmd=error"))
         {
-            webSocket.SendAsync("cmd=mac&uid=" + UserUID, OnSendComplete);
-            assignTag(TagUID);
+            webSocket.SendAsync("cmd=mac&uid=" + userID, OnSendComplete);
+            assignTag(tagID);
         }
         else
         {
@@ -212,12 +212,12 @@ public class VRTracker : MonoBehaviour
         string en = "";
         if (enable)
         {
-            orientationEnabled = 1;
+            cameraOrientationEnabled = 1;
             en = "true";
         }
         else
         {
-            orientationEnabled = 0;
+            cameraOrientationEnabled = 0;
             en = "false";
         }
 
@@ -250,7 +250,7 @@ public class VRTracker : MonoBehaviour
 
     void OnApplicationQuit()
     {
-        TagOrientation(TagUID, false);
+        TagOrientation(tagID, false);
         closeWebsocket();
     }
 }
