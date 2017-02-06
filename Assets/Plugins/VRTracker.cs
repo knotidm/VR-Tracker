@@ -72,7 +72,6 @@ public class VRTracker : MonoBehaviour
         webSocket.SendAsync("cmd=mac&uid=" + userID, OnSendComplete);
         assignTag(cameraTagID);
         assignTag(cubeTagID);
-
     }
 
     private void OnMessageHandler(object sender, MessageEventArgs e)
@@ -115,138 +114,25 @@ public class VRTracker : MonoBehaviour
                 switch (datasplit[0])
                 {
                     case "x":
-                        cubePosition.x = float.Parse(datasplit[1]) + cameraPositionOffset.x;
+                        cubePosition.x = float.Parse(datasplit[1]);
                         break;
                     case "z":
-                        cubePosition.y = float.Parse(datasplit[1]) + cameraPositionOffset.y;
+                        cubePosition.y = float.Parse(datasplit[1]);
                         break;
                     case "y":
-                        cubePosition.z = float.Parse(datasplit[1]) + cameraPositionOffset.z;
+                        cubePosition.z = float.Parse(datasplit[1]);
                         break;
                     case "ox":
-                        cubeOrientation.y = -float.Parse(datasplit[1]) + cameraOrientationOffset.y;
+                        cubeOrientation.y = -float.Parse(datasplit[1]);
                         break;
                     case "oy":
-                        cubeOrientation.z = -float.Parse(datasplit[1]) + cameraOrientationOffset.z;
+                        cubeOrientation.z = -float.Parse(datasplit[1]);
                         break;
                     case "oz":
-                        cubeOrientation.x = -float.Parse(datasplit[1]) + cameraOrientationOffset.x;
+                        cubeOrientation.x = -float.Parse(datasplit[1]);
                         break;
                 }
             }
-            //if (datas[1] == "uid=5c:cf:7f:d9:98:a9")
-            //{
-
-            //    foreach (string data in datas)
-            //    {
-            //        string[] datasplit = data.Split('=');
-
-            //        switch (datasplit[0])
-            //        {
-            //            case "x":
-            //                cameraPosition.x = float.Parse(datasplit[1]) + cameraPositionOffset.x;
-            //                break;
-            //            case "z":
-            //                cameraPosition.y = float.Parse(datasplit[1]) + cameraPositionOffset.y;
-            //                break;
-            //            case "y":
-            //                cameraPosition.z = float.Parse(datasplit[1]) + cameraPositionOffset.z;
-            //                break;
-            //            case "ox":
-            //                cameraOrientation.y = -float.Parse(datasplit[1]) + cameraOrientationOffset.y;
-            //                break;
-            //            case "oy":
-            //                cameraOrientation.z = -float.Parse(datasplit[1]) + cameraOrientationOffset.z;
-            //                break;
-            //            case "oz":
-            //                cameraOrientation.x = -float.Parse(datasplit[1]) + cameraOrientationOffset.x;
-            //                break;
-            //        }
-            //    }
-            //}
-
-            //if (datas[8] == "uid=a0:20:a6:08:c6:57")
-            //{
-            //    foreach (string data in datas)
-            //    {
-            //        string[] datasplit = data.Split('=');
-
-            //        switch (datasplit[0])
-            //        {
-            //            case "x":
-            //                cubePosition.x = float.Parse(datasplit[1]) + cameraPositionOffset.x;
-            //                break;
-            //            case "z":
-            //                cubePosition.y = float.Parse(datasplit[1]) + cameraPositionOffset.y;
-            //                break;
-            //            case "y":
-            //                cubePosition.z = float.Parse(datasplit[1]) + cameraPositionOffset.z;
-            //                break;
-            //            case "ox":
-            //                cubeOrientation.y = -float.Parse(datasplit[1]) + cameraOrientationOffset.y;
-            //                break;
-            //            case "oy":
-            //                cubeOrientation.z = -float.Parse(datasplit[1]) + cameraOrientationOffset.z;
-            //                break;
-            //            case "oz":
-            //                cubeOrientation.x = -float.Parse(datasplit[1]) + cameraOrientationOffset.x;
-            //                break;
-            //        }
-            //    }
-            //}
-        }
-        else if (e.Data.Contains("cmd=specialcmd"))
-        {
-            Debug.Log("VR Tracker : " + e.Data);
-            string[] datas = e.Data.Split('&');
-            string uid = null;
-            string command = null;
-            foreach (string data in datas)
-            {
-                string[] datasplit = data.Split('=');
-
-                if (datasplit[0] == "uid")
-                {
-                    uid = datasplit[1];
-                }
-
-                else if (datasplit[0] == "data")
-                {
-                    command = datasplit[1];
-                }
-            }
-            if (uid != null && command != null)
-                receiveSpecialCommand(uid, command);
-
-        }
-        else if (e.Data.Contains("cmd=taginfos"))
-        {
-            string[] datas = e.Data.Split('&');
-
-            string uid = null;
-            string status = null;
-            int battery = 0;
-
-            foreach (string data in datas)
-            {
-                string[] datasplit = data.Split('=');
-
-                if (datasplit[0] == "uid")
-                {
-                    uid = datasplit[1];
-                }
-                else if (datasplit[0] == "status")
-                {
-                    status = datasplit[1];
-                }
-                else if (datasplit[0] == "battery")
-                {
-                    battery = int.Parse(datasplit[1]);
-                }
-            }
-            if (uid != null && status != null)
-                receiveTagInformations(uid, status, battery);
-
         }
         else if (e.Data.Contains("cmd=error"))
         {
@@ -273,37 +159,12 @@ public class VRTracker : MonoBehaviour
     private void closeWebsocket()
     {
         Debug.Log("VR Tracker : closing websocket connection");
-        this.webSocket.Close();
-    }
-
-    private void sendMyUID(string uid)
-    {
-        webSocket.SendAsync(uid, OnSendComplete);
+        webSocket.Close();
     }
 
     public void assignTag(string TagID)
     {
         webSocket.SendAsync("cmd=tagassign&uid=" + TagID, OnSendComplete);
-    }
-
-    public void assignATag()
-    {
-        webSocket.SendAsync("cmd=assignatag", OnSendComplete);
-    }
-
-    public void unAssignTag(string TagID)
-    {
-        webSocket.SendAsync("cmd=tagunassign&uid=" + TagID, OnSendComplete);
-    }
-
-    public void unAssignAllTags()
-    {
-        webSocket.SendAsync("cmd=tagunassignall", OnSendComplete);
-    }
-
-    public void getTagInformations(string TagID)
-    {
-        webSocket.SendAsync("cmd=taginfos&uid=" + TagID, OnSendComplete);
     }
 
     public void TagOrientation(string TagID, bool enable)
@@ -321,30 +182,6 @@ public class VRTracker : MonoBehaviour
         }
 
         webSocket.SendAsync("cmd=orientation&orientation=" + en + "&uid=" + TagID, OnSendComplete);
-    }
-
-    public void setTagColor(string TagID, int red, int green, int blue)
-    {
-        webSocket.SendAsync("cmd= color&r=" + red + "&g=" + green + "&b=" + blue + "&uid=" + TagID, OnSendComplete);
-    }
-
-    public void sendTagCommand(string TagID, string command)
-    {
-        Debug.Log("VR Tracker : " + command);
-        webSocket.SendAsync("cmd=specialcmd&uid=" + TagID + "&data=" + command, OnSendComplete);
-    }
-
-    public void sendUserBattery(int battery)
-    {
-        webSocket.SendAsync("cmd=usrbattery&battery=" + battery, OnSendComplete);
-    }
-
-    public void receiveSpecialCommand(string TagID, string data)
-    {
-    }
-
-    public void receiveTagInformations(string TagID, string status, int battery)
-    {
     }
 
     void OnApplicationQuit()
