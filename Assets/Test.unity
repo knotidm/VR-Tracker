@@ -893,6 +893,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c2450bd4fef9239409ec4c8dcd0b1eb2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  CameraTransform: {fileID: 0}
   positionOffset: {x: 0, y: 0, z: 0}
   orientationOffset: {x: 0, y: 0, z: 0}
   orientationEnabled: 0
@@ -1252,9 +1253,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c2450bd4fef9239409ec4c8dcd0b1eb2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  CameraTransform: {fileID: 1219819509}
   positionOffset: {x: 0, y: 0, z: 0}
   orientationOffset: {x: 0, y: 0, z: 0}
-  orientationEnabled: 1
+  orientationEnabled: 0
   id: 5c:cf:7f:d9:98:a9
 --- !u!1 &1263593764
 GameObject:

@@ -4,17 +4,17 @@ namespace Assets.Plugins
 {
     public class VRTrackerTag : MonoBehaviour
     {
-        public Vector3 positionOffset;
-        public Vector3 orientationOffset;
-        //public string status;
-        //public int battery;
-
         private Vector3 position;
         private Vector3 orientation;
 
-        public int orientationEnabled = 0;
-
+        public Transform CameraTransform;
+        public Vector3 positionOffset;
+        public Vector3 orientationOffset;
+        public int orientationEnabled;
         public string id;
+
+        //public string status;
+        //public int battery;
 
         void Start()
         {
@@ -22,8 +22,16 @@ namespace Assets.Plugins
 
         void Update()
         {
-            transform.position = position;
-            transform.rotation = Quaternion.Euler(orientation);
+            if (CameraTransform != null)
+            {
+                CameraTransform.transform.position = position;
+                CameraTransform.transform.rotation = Quaternion.Euler(orientation);
+            }
+            else
+            {
+                transform.position = position;
+                transform.rotation = Quaternion.Euler(orientation);
+            }
         }
 
         public void updatePosition(Vector3 position)

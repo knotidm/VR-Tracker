@@ -8,10 +8,9 @@ public class VRTracker : MonoBehaviour
     private Vector3 position;
     private Vector3 orientation;
     private int counter = 0;
-
-    public string userID;
-
     private VRTrackerTag[] tags;
+    private bool orientationEnablingSent = false;
+    public string userID;
 
     void Start()
     {
@@ -21,19 +20,29 @@ public class VRTracker : MonoBehaviour
 
     void Update()
     {
-        if (counter == 50)
+
+        foreach (VRTrackerTag tag in tags)
         {
-            Debug.Log("VR Tracker : asking for orientation");
-            foreach (VRTrackerTag tag in tags)
+            if (tag.orientationEnabled == 1)
             {
-                if (tag.id != null && tag.orientationEnabled == 1)
+                if (!orientationEnablingSent)
+                {
+                    Debug.Log("Tag " + tag.id + ": asking for orientation");
+                    orientationEnablingSent = true;
+                    webSocket.SendAsync("cmd=mac&uid=" + userID, OnSendComplete);
+                    assignTag(tag.id);
                     TagOrientation(tag.id, true);
+                }
             }
-            counter++;
-        }
-        else if (counter < 50)
-        {
-            counter++;
+            else if (counter < 100)
+            {
+                counter++;
+            }
+            else if (counter == 100)
+            {
+                tag.orientationEnabled = 1;
+                counter++;
+            }
         }
     }
 
@@ -51,7 +60,7 @@ public class VRTracker : MonoBehaviour
         tags = FindObjectsOfType(typeof(VRTrackerTag)) as VRTrackerTag[];
         foreach (VRTrackerTag tag in tags)
         {
-            Debug.Log("VR Tracker : " + tag.id);
+            Debug.Log("Found VR Tracker Tag: " + tag.id);
         }
     }
 
@@ -61,8 +70,7 @@ public class VRTracker : MonoBehaviour
         webSocket.SendAsync("cmd=mac&uid=" + userID, OnSendComplete);
         foreach (VRTrackerTag tag in tags)
         {
-            if (tag.id != null)
-                assignTag(tag.id);
+            assignTag(tag.id);
         }
     }
 
@@ -128,13 +136,12 @@ public class VRTracker : MonoBehaviour
             webSocket.SendAsync("cmd=mac&uid=" + userID, OnSendComplete);
             foreach (VRTrackerTag tag in tags)
             {
-                if (tag.id != null)
-                    assignTag(tag.id);
+                assignTag(tag.id);
             }
         }
         else
         {
-            Debug.Log("VR Tracker : Unknown data received : " + e.Data);
+            Debug.Log("VR Tracker data received : " + e.Data);
         }
     }
 
