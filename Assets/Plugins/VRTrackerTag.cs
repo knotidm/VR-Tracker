@@ -34,17 +34,17 @@ namespace Assets.Plugins
             }
         }
 
-        public void updatePosition(Vector3 position)
+        public void UpdatePosition(Vector3 position)
         {
             this.position = position + positionOffset;
         }
 
-        public void updateOrientation(Vector3 orientation)
+        public void UpdateOrientation(Vector3 orientation)
         {
             this.orientation = orientation + orientationOffset;
         }
 
-        public void onSpecialCommand(string data)
+        public void OnSpecialCommand(string data)
         {
             Debug.Log("VR Tracker : special command - " + data);
         }
