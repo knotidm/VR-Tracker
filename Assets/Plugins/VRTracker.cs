@@ -1,58 +1,38 @@
-﻿using UnityEngine;
+﻿using Assets.Plugins;
+using UnityEngine;
 using WebSocketSharp;
 
 public class VRTracker : MonoBehaviour
 {
     private WebSocket webSocket;
-    private Vector3 cameraPosition;
-    private Vector3 cameraOrientation;
-    private Vector3 cubePosition;
-    private Vector3 cubeOrientation;
-    public int cameraOrientationEnabled = 0;
-    public Transform CameraTransform;
-    public Vector3 cameraPositionOffset;
-    public Vector3 cameraOrientationOffset;
+    private Vector3 position;
+    private Vector3 orientation;
     private int counter = 0;
 
-    public GameObject cube;
-
-    public string cameraTagID;
-    public string cubeTagID;
     public string userID;
 
-    private bool orientationEnablingSent = false;
+    private VRTrackerTag[] tags;
+
     void Start()
     {
         openWebsocket();
+        findTags();
     }
 
     void Update()
     {
-        CameraTransform.transform.position = cameraPosition;
-        cube.transform.position = cubePosition;
-        if (cameraOrientationEnabled == 1)
+        if (counter == 50)
         {
-            if (!orientationEnablingSent)
+            Debug.Log("VR Tracker : asking for orientation");
+            foreach (VRTrackerTag tag in tags)
             {
-                Debug.Log("VR Tracker : asking for orientation");
-                orientationEnablingSent = true;
-
-                webSocket.SendAsync("cmd=mac&uid=" + userID, OnSendComplete);
-                assignTag(cameraTagID);
-                assignTag(cubeTagID);
-                TagOrientation(cameraTagID, true);
-                TagOrientation(cubeTagID, true);
+                if (tag.id != null && tag.orientationEnabled == 1)
+                    TagOrientation(tag.id, true);
             }
-            CameraTransform.transform.rotation = Quaternion.Euler(cameraOrientation);
-            cube.transform.rotation = Quaternion.Euler(cubeOrientation);
-        }
-        else if (counter < 100)
-        {
             counter++;
         }
-        else if (counter == 100)
+        else if (counter < 50)
         {
-            cameraOrientationEnabled = 1;
             counter++;
         }
     }
@@ -66,79 +46,91 @@ public class VRTracker : MonoBehaviour
         webSocket.ConnectAsync();
     }
 
+    void findTags()
+    {
+        tags = FindObjectsOfType(typeof(VRTrackerTag)) as VRTrackerTag[];
+        foreach (VRTrackerTag tag in tags)
+        {
+            Debug.Log("VR Tracker : " + tag.id);
+        }
+    }
+
     private void OnOpenHandler(object sender, System.EventArgs e)
     {
         Debug.Log("VR Tracker : connection established");
         webSocket.SendAsync("cmd=mac&uid=" + userID, OnSendComplete);
-        assignTag(cameraTagID);
-        assignTag(cubeTagID);
+        foreach (VRTrackerTag tag in tags)
+        {
+            if (tag.id != null)
+                assignTag(tag.id);
+        }
     }
 
     private void OnMessageHandler(object sender, MessageEventArgs e)
     {
         if (e.Data.Contains("cmd=position"))
         {
-            string[] datas = e.Data.Split('&');
+            string[] dataByTag = e.Data.Split(new string[] { "&uid=" }, System.StringSplitOptions.RemoveEmptyEntries);
 
-            for (int i = 2; i < 8; i++)
+            for (int i = 1; i < dataByTag.Length; i++)
             {
-                string[] datasplit = datas[i].Split('=');
-
-                switch (datasplit[0])
+                bool positionUpdated = false;
+                bool orientationUpdated = false;
+                string[] datas = dataByTag[i].Split('&');
+                string tagID = datas[0];
+                foreach (string data in datas)
                 {
-                    case "x":
-                        cameraPosition.x = float.Parse(datasplit[1]) + cameraPositionOffset.x;
-                        break;
-                    case "z":
-                        cameraPosition.y = float.Parse(datasplit[1]) + cameraPositionOffset.y;
-                        break;
-                    case "y":
-                        cameraPosition.z = float.Parse(datasplit[1]) + cameraPositionOffset.z;
-                        break;
-                    case "ox":
-                        cameraOrientation.y = -float.Parse(datasplit[1]) + cameraOrientationOffset.y;
-                        break;
-                    case "oy":
-                        cameraOrientation.z = -float.Parse(datasplit[1]) + cameraOrientationOffset.z;
-                        break;
-                    case "oz":
-                        cameraOrientation.x = -float.Parse(datasplit[1]) + cameraOrientationOffset.x;
-                        break;
+                    string[] datasplit = data.Split('=');
+
+                    switch (datasplit[0])
+                    {
+                        case "x":
+                            positionUpdated = true;
+                            position.x = float.Parse(datasplit[1]);
+                            break;
+                        case "z":
+                            position.y = float.Parse(datasplit[1]);
+                            break;
+                        case "y":
+                            position.z = float.Parse(datasplit[1]);
+                            break;
+                        case "ox":
+                            orientationUpdated = true;
+                            orientation.y = -float.Parse(datasplit[1]);
+                            break;
+                        case "oy":
+                            orientation.z = -float.Parse(datasplit[1]);
+                            break;
+                        case "oz":
+                            orientation.x = float.Parse(datasplit[1]);
+                            break;
+                    }
                 }
-            }
 
-            for (int i = 9; i < 15; i++)
-            {
-                string[] datasplit = datas[i].Split('=');
-
-                switch (datasplit[0])
+                foreach (VRTrackerTag tag in tags)
                 {
-                    case "x":
-                        cubePosition.x = float.Parse(datasplit[1]);
-                        break;
-                    case "z":
-                        cubePosition.y = float.Parse(datasplit[1]);
-                        break;
-                    case "y":
-                        cubePosition.z = float.Parse(datasplit[1]);
-                        break;
-                    case "ox":
-                        cubeOrientation.y = -float.Parse(datasplit[1]);
-                        break;
-                    case "oy":
-                        cubeOrientation.z = -float.Parse(datasplit[1]);
-                        break;
-                    case "oz":
-                        cubeOrientation.x = -float.Parse(datasplit[1]);
-                        break;
+                    if (tag.id == tagID)
+                    {
+                        if (tag.orientationEnabled == 1 && orientationUpdated)
+                            tag.updateOrientation(orientation);
+                        if (positionUpdated)
+                        {
+                            tag.updatePosition(position);
+                        }
+                    }
                 }
             }
         }
+
         else if (e.Data.Contains("cmd=error"))
         {
+            Debug.LogWarning("VR Tracker : " + e.Data);
             webSocket.SendAsync("cmd=mac&uid=" + userID, OnSendComplete);
-            assignTag(cameraTagID);
-            assignTag(cubeTagID);
+            foreach (VRTrackerTag tag in tags)
+            {
+                if (tag.id != null)
+                    assignTag(tag.id);
+            }
         }
         else
         {
@@ -156,38 +148,38 @@ public class VRTracker : MonoBehaviour
         Debug.Log("VR Tracker : Send Complete");
     }
 
-    private void closeWebsocket()
+    public void assignTag(string tagID)
     {
-        Debug.Log("VR Tracker : closing websocket connection");
-        webSocket.Close();
+        webSocket.SendAsync("cmd=tagassign&uid=" + tagID, OnSendComplete);
     }
 
-    public void assignTag(string TagID)
-    {
-        webSocket.SendAsync("cmd=tagassign&uid=" + TagID, OnSendComplete);
-    }
-
-    public void TagOrientation(string TagID, bool enable)
+    public void TagOrientation(string tagID, bool enable)
     {
         string en = "";
         if (enable)
         {
-            cameraOrientationEnabled = 1;
             en = "true";
         }
         else
         {
-            cameraOrientationEnabled = 0;
             en = "false";
         }
 
-        webSocket.SendAsync("cmd=orientation&orientation=" + en + "&uid=" + TagID, OnSendComplete);
+        webSocket.SendAsync("cmd=orientation&orientation=" + en + "&uid=" + tagID, OnSendComplete);
     }
 
     void OnApplicationQuit()
     {
-        TagOrientation(cameraTagID, false);
-        TagOrientation(cubeTagID, false);
+        foreach (VRTrackerTag tag in tags)
+        {
+            TagOrientation(tag.id, false);
+        }
         closeWebsocket();
+    }
+
+    private void closeWebsocket()
+    {
+        Debug.Log("VR Tracker : closing websocket connection");
+        webSocket.Close();
     }
 }
