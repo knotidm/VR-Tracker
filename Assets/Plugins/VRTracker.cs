@@ -134,11 +134,13 @@ public class VRTracker : MonoBehaviour
         else if (e.Data.Contains("cmd=error"))
         {
             Debug.LogWarning("VR Tracker : " + e.Data);
-            webSocket.SendAsync("cmd=mac&uid=" + userID, OnSendComplete);
-            foreach (var tag in tags)
-            {
-                AssignTag(tag.id);
-            }
+			if (e.Data.Contains("needmacadress")) {
+				webSocket.SendAsync("cmd=mac&uid=" + userID, OnSendComplete);
+				foreach (var tag in tags)
+				{
+					AssignTag(tag.id);
+				}
+			}        
         }
         else
         {
